@@ -1,1 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <meta name="google-signin-client_id" content="1026374953797-7903br684kdias2k0cp62admbrjfignj.apps.googleusercontent.com" />
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <title>Login con Google</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 3rem; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    #boto-sortir { display: none; padding: .6rem 1rem; border: 0; border-radius: 10px; cursor: pointer; }
+    #mensaje-bienvenida, #datos-usuario { display: none; }
+    .espacio { height: 16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Inicia sesión con Google</h1>
+
+    <div id="g_id_onload"
+         data-client_id="1026374953797-7903br684kdias2k0cp62admbrjfignj.apps.googleusercontent.com"
+         data-callback="onSignIn"
+         data-auto_prompt="false">
+    </div>
+
+    <div class="g_id_signin"
+         data-type="standard"
+         data-shape="rectangular"
+         data-theme="outline"
+         data-text="signin_with"
+         data-size="large"
+         data-logo_alignment="left">
+    </div>
+
+    <div class="espacio"></div>
+
+    <h2 id="mensaje-bienvenida">¡Bienvenido/a!</h2>
+    <p id="datos-usuario"></p>
+
+    <button id="boto-sortir" onclick="signOut()">Desconectar</button>
+
+    <p><small>Abre la consola (F12) para ver el <strong>ID Token</strong>.</small></p>
+  </div>
+
+  <script>
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    function onSignIn(response) {
+      const id_token = response.credential;
+      console.log("ID Token:", id_token);
+
+      let datos = {};
+      try { datos = parseJwt(id_token); } catch (e) { console.warn("No se pudo parsear el token", e); }
+
+      const btnSalir = document.getElementById('boto-sortir');
+      const btnLogin = document.querySelector('.g_id_signin');
+      const h2 = document.getElementById('mensaje-bienvenida');
+      const pDatos = document.getElementById('datos-usuario');
+
+      h2.style.display = 'block';
+      h2.textContent = datos.name ? `Hola, ${datos.name}!` : 'Sesión iniciada';
+      pDatos.style.display = 'block';
+      pDatos.textContent = datos.email ? `Has iniciado sesión con: ${datos.email}` : '';
+
+      btnSalir.style.display = 'inline-block';
+      btnLogin.style.display = 'none';
+    }
+
+    function signOut() {
+      if (window.google && google.accounts && google.accounts.id) {
+        google.accounts.id.disableAutoSelect();
+      }
+      document.getElementById('boto-sortir').style.display = 'none';
+      document.getElementById('mensaje-bienvenida').style.display = 'none';
+      const p = document.getElementById('datos-usuario');
+      p.style.display = 'none'; p.textContent = '';
+      document.querySelector('.g_id_signin').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
